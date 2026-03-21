@@ -151,4 +151,10 @@ contract ServiceEscrowTest is Test {
         vm.expectRevert(ServiceEscrow.EscrowNotCreated.selector);
         escrow.releaseEscrow(id);
     }
+
+    function test_createEscrow_selfDeal_reverts() public {
+        vm.prank(payer);
+        vm.expectRevert(ServiceEscrow.InvalidPayee.selector);
+        escrow.createEscrow(payer, AMOUNT, bytes32("svc1"), bytes32("hash1"), 1 days);
+    }
 }

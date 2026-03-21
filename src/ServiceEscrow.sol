@@ -47,6 +47,7 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
     error InvalidAmount();
     error InvalidTimeout();
     error ZeroAddress();
+    error InvalidPayee();
     error NotPayer();
     error NotParty();
     error EscrowNotCreated();
@@ -78,6 +79,7 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
         if (amount == 0) revert InvalidAmount();
         if (timeout == 0) revert InvalidTimeout();
         if (payee == address(0)) revert ZeroAddress();
+        if (payee == msg.sender) revert InvalidPayee();
 
         escrowId = nextEscrowId++;
         escrows[escrowId] = Escrow({
