@@ -110,9 +110,8 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
         usdc.safeTransfer(e.payee, payout);
         if (fee > 0) usdc.safeTransfer(treasury, fee);
 
-        // Update reputation for both parties
+        // Update reputation for service provider only
         agentDID.updateReputation(e.payee, true);
-        agentDID.updateReputation(e.payer, true);
 
         emit EscrowReleased(escrowId, fee);
     }
@@ -161,7 +160,6 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
             usdc.safeTransfer(e.payee, payout);
             if (fee > 0) usdc.safeTransfer(treasury, fee);
             agentDID.updateReputation(e.payee, true);
-            agentDID.updateReputation(e.payer, true);
         }
 
         emit DisputeResolved(escrowId, payerWins);

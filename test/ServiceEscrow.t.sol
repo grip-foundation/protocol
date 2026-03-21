@@ -109,7 +109,7 @@ contract ServiceEscrowTest is Test {
         assertEq(usdc.balanceOf(payer), payerBefore + AMOUNT);
     }
 
-    function test_dispute_and_resolve_payeWins() public {
+    function test_dispute_and_resolve_payeeWins() public {
         vm.prank(payer);
         uint256 id = escrow.createEscrow(payee, AMOUNT, bytes32("svc1"), bytes32("hash1"), 1 days);
 
