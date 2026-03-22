@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: linear-gradient(135deg, #8b5cf6 0%, #22d3ee 100%);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: #07090d;
+  color: #edf2ff;
+  font-family: 'IBM Plex Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(111,136,198,0.28); border-radius: 2px; }
+
+/* Brand gradient text */
+.grad {
+  background: var(--brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Grid overlay */
+.grid-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(255,255,255,0.016) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.016) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.6), transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Code highlight */
+.code-block {
+  background: linear-gradient(180deg, #05070d, #060912);
+  border: 1px solid rgba(111,136,198,0.28);
+  padding: 20px 24px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.t-green  { color: #34d399; }
+.t-blue   { color: #60a5fa; }
+.t-violet { color: #c084fc; }
+.t-orange { color: #fb923c; }
+.t-muted  { color: #475569; font-style: italic; }
