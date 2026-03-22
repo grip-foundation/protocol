@@ -1,11 +1,20 @@
+/**
+ * Unified types — merge of @payclaw/sdk + @grip-protocol/sdk types.
+ */
+
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 export interface PayClawConfig {
+  /** API key issued by PayClaw (starts with `payclaw_`). */
   apiKey: string;
+  /** Default agent identifier. */
   agentId: string;
-  baseUrl?: string;       // default: https://api.payclaw.me
-  timeout?: number;       // ms, default: 30000
-  onError?: (err: PayClawError) => void;
+  /** Base URL of the PayClaw API. Defaults to `https://api.payclaw.me/v1`. */
+  baseUrl?: string;
+  /** Request timeout in milliseconds. Defaults to `10_000`. */
+  timeoutMs?: number;
+  /** Called when a payment requires human approval. */
+  onApprovalNeeded?: (tx: PayResult) => Promise<void>;
 }
 
 export interface AgentConfig {
@@ -17,9 +26,24 @@ export interface AgentConfig {
 
 // ─── Payments ────────────────────────────────────────────────────────────────
 
+export type PaymentStatus = "paid" | "pending_approval" | "rejected" | "failed" | "confirmed" | "pending";
+
 export interface PayOptions {
   memo?: string;
 }
+
+export interface PayResult {
+  id: string;
+  status: PaymentStatus;
+  txHash?: string;
+  receipt?: string;
+  amountUsdc: number;
+  fee?: number;
+  to: string;
+  balance?: number;
+}
+
+// ─── Escrow ──────────────────────────────────────────────────────────────────
 
 export interface EscrowOptions {
   serviceId?: string;
@@ -28,30 +52,129 @@ export interface EscrowOptions {
   memo?: string;
 }
 
-export interface PayResult {
-  id: string;
-  status: 'confirmed' | 'pending' | 'failed';
-  txHash: string;
-  amountUsdc: number;
-  fee: number;
-  to: string;
-  timestamp: string;
-}
-
 export interface EscrowResult {
-  id: string;
-  escrowId: number;
+  paymentId: string;
+  escrowId: string;
   txHash: string;
-  status: 'confirmed' | 'pending';
+  status: "confirmed" | "pending";
   amountUsdc: number;
   payeeAddress: string;
   timeoutSeconds: number;
+  fee: number;
 }
 
 export interface ReleaseResult {
-  escrowId: number;
+  escrowId: string;
   txHash: string;
-  status: 'released';
+  status: "released";
+}
+
+export interface EscrowInfo {
+  escrowId: string;
+  payer: string;
+  payee: string;
+  amountUsdc: string;
+  serviceId: string;
+  status: "created" | "released" | "refunded" | "disputed";
+  timeout: number;
+  createdAt: number;
+}
+
+// ─── Balance ─────────────────────────────────────────────────────────────────
+
+export interface BalanceResponse {
+  available: number;
+  currency: "USDC";
+  pending: number;
+}
+
+export interface Balance {
+  usdc: number;
+  address: string | null;
+}
+
+// ─── Limits & CanPay ─────────────────────────────────────────────────────────
+
+export interface LimitsResponse {
+  perTx: number;
+  daily: number;
+  monthly: number;
+  used: { daily: number; monthly: number };
+}
+
+export type CanPayReason =
+  | "exceeds_per_tx_limit"
+  | "exceeds_daily_limit"
+  | "exceeds_monthly_limit"
+  | "insufficient_balance"
+  | "destination_not_whitelisted";
+
+export type CanPayResponse =
+  | { allowed: true; reason: null }
+  | { allowed: false; reason: CanPayReason };
+
+// ─── Destinations ────────────────────────────────────────────────────────────
+
+export type DestinationType = "merchant" | "individual" | "platform";
+export type DestinationStatus = "whitelisted" | "pending" | "blocked";
+
+export interface Destination {
+  id: string;
+  name: string;
+  type: DestinationType;
+  status: DestinationStatus;
+}
+
+export interface DestinationRequestResult {
+  id: string;
+  status: "pending_human_approval";
+}
+
+export interface DestinationRequestDetails {
+  website?: string;
+  reason?: string;
+  [key: string]: unknown;
+}
+
+// ─── Top-up ──────────────────────────────────────────────────────────────────
+
+export type TopupMethod = "crypto" | "bank_transfer" | "card";
+
+export interface TopupResult {
+  id: string;
+  status: "pending" | "completed";
+  instructions: string;
+}
+
+// ─── History ─────────────────────────────────────────────────────────────────
+
+export interface HistoryFilters {
+  status?: PaymentStatus;
+  from?: string;
+  to?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface Payment {
+  id: string;
+  type: "direct" | "escrow";
+  direction: "outbound" | "inbound";
+  status: string;
+  amountUsdc: number;
+  feeUsdc: number;
+  toAddress: string | null;
+  fromAddress: string | null;
+  memo: string | null;
+  escrowId: string | null;
+  txHash: string | null;
+  createdAt: string;
+  confirmedAt: string | null;
+}
+
+export interface HistoryResponse {
+  transactions: Payment[];
+  cursor: string | null;
 }
 
 // ─── Agents ──────────────────────────────────────────────────────────────────
@@ -66,13 +189,14 @@ export interface AgentInfo {
   onChainTx: string | null;
   createdAt: string;
   onChainInfo?: {
-    reputationScore: bigint;
-    totalTxs: bigint;
-    successRate: bigint;
+    reputationScore: number;
+    totalTxs: number;
+    successRate: number;
+    skillset: string[];
   } | null;
 }
 
-// ─── Session Keys ─────────────────────────────────────────────────────────────
+// ─── Session Keys ────────────────────────────────────────────────────────────
 
 export interface SessionKeyConfig {
   dailyLimitUsdc: number;
@@ -104,76 +228,21 @@ export interface PixWithdrawResult {
   e2eId: string;
   amountBrl: number;
   amountUsdc: number;
-  status: 'pending';
+  status: "pending";
   estimatedMinutes: number;
 }
 
 export interface PixRate {
-  brl_per_usdc: number;
-  usdc_per_brl: number;
-  source: string;
-  timestamp: string;
+  rateBrlUsdc: number;
+  currency: string;
 }
 
-// ─── Balance & History ───────────────────────────────────────────────────────
+// ─── Internal ────────────────────────────────────────────────────────────────
 
-export interface Balance {
-  usdc: number;
-  address: string | null;
-}
-
-export interface Payment {
-  id: string;
-  type: 'direct' | 'escrow';
-  direction: 'outbound' | 'inbound';
-  status: 'pending' | 'confirmed' | 'failed' | 'refunded';
-  amountUsdc: number;
-  feeUsdc: number;
-  toAddress: string | null;
-  fromAddress: string | null;
-  memo: string | null;
-  escrowId: number | null;
-  txHash: string | null;
-  createdAt: string;
-  confirmedAt: string | null;
-}
-
-// ─── Errors ──────────────────────────────────────────────────────────────────
-
-export class PayClawError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-    public readonly status?: number,
-    public readonly details?: unknown,
-  ) {
-    super(message);
-    this.name = 'PayClawError';
-  }
-}
-
-export class InsufficientFundsError extends PayClawError {
-  constructor(required: number, available: number) {
-    super(
-      `Insufficient funds: need ${required} USDC, have ${available} USDC`,
-      'INSUFFICIENT_FUNDS',
-      402,
-      { required, available },
-    );
-    this.name = 'InsufficientFundsError';
-  }
-}
-
-export class AgentNotFoundError extends PayClawError {
-  constructor(agentId: string) {
-    super(`Agent "${agentId}" not found`, 'AGENT_NOT_FOUND', 404);
-    this.name = 'AgentNotFoundError';
-  }
-}
-
-export class UnauthorizedError extends PayClawError {
-  constructor() {
-    super('Invalid or missing API key', 'UNAUTHORIZED', 401);
-    this.name = 'UnauthorizedError';
-  }
+/** @internal */
+export interface ApiResponse<T> {
+  ok: boolean;
+  data: T;
+  error?: string;
+  code?: string;
 }

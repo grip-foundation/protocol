@@ -10,3 +10,5 @@ out/
 # Dotenv file
 .env
 PROMPT.md
+sdk/node_modules/
+sdk/dist/

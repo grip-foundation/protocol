@@ -1,7 +1,7 @@
 {
   "name": "@grip-protocol/sdk",
-  "version": "0.1.0",
-  "description": "PayClaw SDK — Payment infrastructure for AI agents",
+  "version": "0.2.0",
+  "description": "Unified PayClaw + Grip Protocol SDK — Payment infrastructure for AI agents",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -20,11 +20,11 @@
     "test:watch": "vitest",
     "lint": "tsc --noEmit"
   },
-  "keywords": ["ai", "agents", "payments", "pix", "usdc", "base", "grip-protocol"],
+  "keywords": [
+    "ai", "agents", "payments", "pix", "usdc", "base",
+    "grip-protocol", "payclaw", "escrow", "session-keys"
+  ],
   "license": "MIT",
-  "dependencies": {
-    "zod": "^3.22.4"
-  },
   "devDependencies": {
     "@types/node": "^20.12.0",
     "tsup": "^8.0.2",
