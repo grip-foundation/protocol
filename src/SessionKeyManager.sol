@@ -114,7 +114,8 @@ contract SessionKeyManager is Ownable2Step, Pausable {
 
         // Check allowed contracts
         bool allowed = false;
-        for (uint256 i = 0; i < key.allowedContracts.length; i++) {
+        uint256 len = key.allowedContracts.length;
+        for (uint256 i = 0; i < len; i++) {
             if (key.allowedContracts[i] == target) {
                 allowed = true;
                 break;

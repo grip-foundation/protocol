@@ -106,14 +106,16 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
 
         e.status = EscrowStatus.Released;
 
-        uint256 fee = (e.amount * FEE_BPS) / BPS_DENOMINATOR;
-        uint256 payout = e.amount - fee;
+        address payee_ = e.payee;
+        uint256 amount_ = e.amount;
+        uint256 fee = (amount_ * FEE_BPS) / BPS_DENOMINATOR;
+        uint256 payout = amount_ - fee;
 
-        usdc.safeTransfer(e.payee, payout);
+        usdc.safeTransfer(payee_, payout);
         if (fee > 0) usdc.safeTransfer(treasury, fee);
 
         // Update reputation for service provider only
-        agentDID.updateReputation(e.payee, true);
+        agentDID.updateReputation(payee_, true);
 
         emit EscrowReleased(escrowId, fee);
     }
@@ -125,10 +127,14 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
         if (e.status != EscrowStatus.Created) revert EscrowNotCreated();
         if (block.timestamp < e.createdAt + e.timeout) revert TimeoutNotReached();
 
-        e.status = EscrowStatus.Refunded;
-        usdc.safeTransfer(e.payer, e.amount);
+        address payee_ = e.payee;
+        address payer_ = e.payer;
+        uint256 amount_ = e.amount;
 
-        agentDID.updateReputation(e.payee, false);
+        e.status = EscrowStatus.Refunded;
+        usdc.safeTransfer(payer_, amount_);
+
+        agentDID.updateReputation(payee_, false);
 
         emit EscrowRefunded(escrowId);
     }
@@ -151,17 +157,21 @@ contract ServiceEscrow is Ownable2Step, Pausable, ReentrancyGuard {
         Escrow storage e = escrows[escrowId];
         if (e.status != EscrowStatus.Disputed) revert EscrowNotDisputed();
 
+        address payee_ = e.payee;
+        address payer_ = e.payer;
+        uint256 amount_ = e.amount;
+
         if (payerWins) {
             e.status = EscrowStatus.Refunded;
-            usdc.safeTransfer(e.payer, e.amount);
-            agentDID.updateReputation(e.payee, false);
+            usdc.safeTransfer(payer_, amount_);
+            agentDID.updateReputation(payee_, false);
         } else {
             e.status = EscrowStatus.Released;
-            uint256 fee = (e.amount * FEE_BPS) / BPS_DENOMINATOR;
-            uint256 payout = e.amount - fee;
-            usdc.safeTransfer(e.payee, payout);
+            uint256 fee = (amount_ * FEE_BPS) / BPS_DENOMINATOR;
+            uint256 payout = amount_ - fee;
+            usdc.safeTransfer(payee_, payout);
             if (fee > 0) usdc.safeTransfer(treasury, fee);
-            agentDID.updateReputation(e.payee, true);
+            agentDID.updateReputation(payee_, true);
         }
 
         emit DisputeResolved(escrowId, payerWins);
